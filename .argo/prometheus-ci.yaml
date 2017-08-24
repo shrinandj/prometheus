@@ -1,0 +1,27 @@
+---
+type: workflow
+version: 1
+name: Prometheus CI
+description: Prometheus continuous test and build
+inputs:
+  parameters:
+    COMMIT:
+      default: "%%session.commit%%"
+    REPO:
+      default: "%%session.repo%%"
+steps:
+- CHECKOUT:
+    template: prometheus-checkout
+- PROMETHEUS-BUILD:
+    image: golang:1.8
+    command: ["sh", "-c", "mkdir -p $GOPATH/src/github.com/prometheus;  \
+                cd $GOPATH/src/github.com/prometheus; \
+                ls -lart /src/"]
+    env:
+    - name: GO15VENDOREXPERIMENT
+      value: "1"
+    inputs:
+        artifacts:
+            CODE:
+                from: "%%steps.CHECKOUT.outputs.artifacts.CODE%%"
+                path: "/src"
