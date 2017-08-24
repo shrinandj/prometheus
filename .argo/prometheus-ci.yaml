@@ -1,0 +1,74 @@
+---
+type: workflow
+version: 1
+name: Prometheus CI
+description: Prometheus continuous test and build
+inputs:
+  parameters:
+    REPO:
+      default: "%%session.repo%%"
+    COMMIT:
+      default: "%%session.commit%%"
+steps:
+- CHECKOUT:
+    template: prometheus-checkout
+- PROMETHEUS-BUILD:
+    image: docker.applatix.net/shri/prometheus-build:latest
+    command: ["/build.sh"]
+    args: ["promu", ";", "promu", "crossbuild"]
+    resources:
+      mem_mib: 1024
+      cpu_cores: 0.3
+    inputs:
+        artifacts:
+            CODE:
+                from: "%%steps.CHECKOUT.outputs.artifacts.CODE%%"
+                path: "/src"
+- PROMETHEUS-SHORT-TESTS:
+    image: docker.applatix.net/shri/prometheus-build:latest
+    command: ["/build.sh"]
+    args: ["test-short"]
+    resources:
+      mem_mib: 1024
+      cpu_cores: 0.3
+    inputs:
+        artifacts:
+            CODE:
+                from: "%%steps.CHECKOUT.outputs.artifacts.CODE%%"
+                path: "/src"
+  PROMETHEUS-TESTS:
+    image: docker.applatix.net/shri/prometheus-build:latest
+    command: ["/build.sh"]
+    args: ["test"]
+    resources:
+      mem_mib: 2048
+      cpu_cores: 0.5
+    inputs:
+        artifacts:
+            CODE:
+                from: "%%steps.CHECKOUT.outputs.artifacts.CODE%%"
+                path: "/src"
+  PROMETHEUS-FORMAT:
+    image: docker.applatix.net/shri/prometheus-build:latest
+    command: ["/build.sh"]
+    args: ["format"]
+    resources:
+      mem_mib: 1024
+      cpu_cores: 0.3
+    inputs:
+        artifacts:
+            CODE:
+                from: "%%steps.CHECKOUT.outputs.artifacts.CODE%%"
+                path: "/src"
+  PROMETHEUS-VET:
+    image: docker.applatix.net/shri/prometheus-build:latest
+    command: ["/build.sh"]
+    args: ["vet"]
+    resources:
+      mem_mib: 1024
+      cpu_cores: 0.3
+    inputs:
+        artifacts:
+            CODE:
+                from: "%%steps.CHECKOUT.outputs.artifacts.CODE%%"
+                path: "/src"
